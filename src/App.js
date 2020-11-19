@@ -9,19 +9,81 @@ JavaScript 객체로 인식됩니다.
 즉, JSX를 if 구문 및 for loop 안에 사용하고, 
 변수에 할당하고, 인자로서 받아들이고, 함수로부터 반환할 수 있습니다.
 */
-function formatName(user) {
-  return user.firstName + " " + user.lastName;
-}
-const user = {
-  firstName: "Rovert ",
-  lastName: "Downey Jr.",
-};
-function App() {
-  return (
-    <div>
-      <h1>{formatName(user)}</h1>
-    </div>
-  );
+
+import React from "react";
+import { Board } from "./components/index";
+import { v4 as uuidv4 } from "uuid";
+import calculateWinner from "./helper/calculateWinner";
+import "./css/app.css";
+
+class Game extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      history: [
+        {
+          squares: Array(9).fill(null),
+        },
+      ],
+      stepNumber: 0,
+      xIsNext: true,
+    };
+  }
+
+  handleClick = (i) => {
+    //return 에 this.renderSquare에서 i값을 받고 onclick에 i값을 매개변수로 handleClick에게 전해줌
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
+    const current = history[history.length - 1];
+    const squares = current.squares.slice(); // immutable
+    if (squares[i] || calculateWinner(squares)) return; //이미 칸이 차있으면 return을 통해 함수를 종료시킨다.
+    squares[i] = this.state.xIsNext ? "X" : "O";
+    this.setState({
+      history: [...history, { squares }],
+      stepNumber: history.length,
+      xIsNext: !this.state.xIsNext,
+    });
+  };
+
+  jumpTo(step, e) {
+    this.setState({ stepNumber: step, xIsNext: step % 2 === 0 });
+  }
+
+  render() {
+    const history = this.state.history;
+    const current = history[this.state.stepNumber];
+    const winner = calculateWinner(current.squares);
+
+    const moves = history.map((step, move) => {
+      const desc = move ? `Go to move #` + move : `Go to game start`;
+      return (
+        <li>
+          <button onClick={(e) => this.jumpTo(move, e)} key={uuidv4}>
+            {desc}
+          </button>
+        </li>
+      );
+    });
+
+    let status = "Let's go get them!! first user is X";
+    if (winner) {
+      status = `Winner : ` + winner;
+    } else {
+      status = `Next player : ` + (this.state.xIsNext ? "X" : "O");
+    }
+
+    return (
+      <div className="game">
+        <div className="game-board">
+          <Board squares={current.squares} onClick={this.handleClick} />
+        </div>
+        <div className="game-info">
+          <div>{status} </div>
+          <ol>{moves}</ol>
+        </div>
+      </div>
+    );
+  }
 }
 
-export default App;
+export default Game;
