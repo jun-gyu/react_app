@@ -11,7 +11,7 @@ JavaScript 객체로 인식됩니다.
 */
 
 import React from "react";
-import { Board } from "./components/index";
+import { Board, HistoryBtn } from "./components/index";
 import { v4 as uuidv4 } from "uuid";
 import calculateWinner from "./helper/calculateWinner";
 import "./css/app.css";
@@ -28,6 +28,7 @@ class Game extends React.Component {
       ],
       stepNumber: 0,
       xIsNext: true,
+      isBold: false,
     };
   }
 
@@ -45,25 +46,26 @@ class Game extends React.Component {
     });
   };
 
-  jumpTo(step, e) {
-    this.setState({ stepNumber: step, xIsNext: step % 2 === 0 });
+  jumpTo(step) {
+    if (!this.state.isBold) {
+      this.setState({
+        stepNumber: step,
+        xIsNext: step % 2 === 0,
+        isBold: true,
+      });
+    } else {
+      this.setState({
+        stepNumber: step,
+        xIsNext: step % 2 === 0,
+        isBold: false,
+      });
+    }
   }
 
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
     const winner = calculateWinner(current.squares);
-
-    const moves = history.map((step, move) => {
-      const desc = move ? `Go to move #` + move : `Go to game start`;
-      return (
-        <li>
-          <button onClick={(e) => this.jumpTo(move, e)} key={uuidv4}>
-            {desc}
-          </button>
-        </li>
-      );
-    });
 
     let status = "Let's go get them!! first user is X";
     if (winner) {
@@ -74,12 +76,25 @@ class Game extends React.Component {
 
     return (
       <div className="game">
+        {console.log("Game Render")}
         <div className="game-board">
           <Board squares={current.squares} onClick={this.handleClick} />
         </div>
         <div className="game-info">
           <div>{status} </div>
-          <ol>{moves}</ol>
+          <ol>
+            {history.map((step, move) => {
+              const des = move ? `Go to move #` + move : `Go to game start`;
+              return (
+                <HistoryBtn
+                  onClick={() => this.jumpTo(move)}
+                  isBold={this.state.isBold}
+                  key={uuidv4()}
+                  des={des}
+                />
+              );
+            })}
+          </ol>
         </div>
       </div>
     );
